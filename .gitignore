@@ -1,0 +1,6 @@
+node_modules/
+.models/
+.cache/
+.agent/spill/
+.agent/sessions/
+.DS_Store

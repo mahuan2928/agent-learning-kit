@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "run_bash", "command": ".agent/hooks/block-rm.sh" },
+      { "matcher": "run_bash", "command": ".agent/hooks/add-timeout.sh" }
+    ],
+    "Stop": [
+      { "command": ".agent/hooks/require-green.sh" }
+    ]
+  }
+}

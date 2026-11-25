@@ -1,0 +1,6 @@
+#!/bin/bash
+# 用法: with-timeout <秒> <命令字符串>
+# macOS 默认没有 GNU timeout, 没有时退回 perl 的 alarm
+secs=$1; cmd=$2
+if command -v timeout >/dev/null 2>&1; then exec timeout "$secs" /bin/bash -c "$cmd"; fi
+exec perl -e 'alarm shift; exec "/bin/bash", "-c", shift' "$secs" "$cmd"

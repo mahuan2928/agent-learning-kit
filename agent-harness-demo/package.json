@@ -1,0 +1,21 @@
+{
+  "name": "agent-harness-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "《Agent Harness 拆解》的可运行最小实现 — M1~M3 + hooks",
+  "scripts": {
+    "agent": "tsx src/cli.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.68.0",
+    "zod": "3.25.76",
+    "zod-to-json-schema": "3.24.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2"
+  }
+}

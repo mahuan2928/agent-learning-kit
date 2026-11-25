@@ -1,0 +1,46 @@
+{"id": "K1", "type": "keyword", "role": "staff", "q": "POSにE-221と出ています。会計はできますか？", "gold": [{"doc": "D11", "span": "E-221 は本部サーバー"}], "answer": "オフラインモードで会計を続けられる", "forbidden_docs": [], "stale_docs": []}
+{"id": "K2", "type": "keyword", "role": "staff", "q": "HACCP-07ってどういう手順？", "gold": [{"doc": "D04", "span": "手順書 HACCP-07"}], "answer": "冷蔵庫が10℃超のとき30分後に再測定", "forbidden_docs": [], "stale_docs": []}
+{"id": "K3", "type": "keyword", "role": "staff", "q": "E-305が消えないときはどうする？", "gold": [{"doc": "D11", "span": "E-305 はカード決済端末"}], "answer": "現金またはQR決済で対応", "forbidden_docs": [], "stale_docs": []}
+{"id": "K4", "type": "keyword", "role": "staff", "q": "HACCP-03には何を書けばいい？", "gold": [{"doc": "D04", "span": "チェック表 HACCP-03"}], "answer": "清掃の担当者名", "forbidden_docs": [], "stale_docs": []}
+{"id": "K5", "type": "keyword", "role": "staff", "q": "内線2400はどこの部署？", "gold": [{"doc": "D06", "span": "内線2400"}], "answer": "情報システム課", "forbidden_docs": [], "stale_docs": []}
+{"id": "P1", "type": "paraphrase", "role": "staff", "q": "残業代ってどうやって計算されるの？", "gold": [{"doc": "D01", "span": "1.25を乗じて"}], "answer": "時間単価×1.25", "forbidden_docs": [], "stale_docs": []}
+{"id": "P2", "type": "paraphrase", "role": "staff", "q": "夜遅くまで働いたら割増はつきますか？", "gold": [{"doc": "D01", "span": "22時から翌5時まで"}], "answer": "22時〜5時は0.25加算", "forbidden_docs": [], "stale_docs": []}
+{"id": "P3", "type": "paraphrase", "role": "staff", "q": "パスワードは何文字にすればいい？", "gold": [{"doc": "D06", "span": "12文字以上"}], "answer": "12文字以上、大小英字と数字", "forbidden_docs": [], "stale_docs": []}
+{"id": "P4", "type": "paraphrase", "role": "staff", "q": "自分の携帯で業務アプリを使ってもいいですか？", "gold": [{"doc": "D06", "span": "私物のスマートフォンで業務システム"}], "answer": "画面ロック＋情報システム課に登録", "forbidden_docs": [], "stale_docs": []}
+{"id": "P5", "type": "paraphrase", "role": "staff", "q": "まかないはいくらで食べられる？", "gold": [{"doc": "D13", "span": "1食あたり300円"}], "answer": "300円", "forbidden_docs": [], "stale_docs": []}
+{"id": "P6", "type": "paraphrase", "role": "staff", "q": "家族と食べに行くと安くなりますか？", "gold": [{"doc": "D13", "span": "30%引き"}], "answer": "4名まで30%引き", "forbidden_docs": [], "stale_docs": []}
+{"id": "P7", "type": "paraphrase", "role": "staff", "q": "お客さんに卵が入っているか聞かれたらどう答える？", "gold": [{"doc": "D05", "span": "アレルギー一覧表を見せて"}], "answer": "口頭で答えず一覧表を見せる", "forbidden_docs": [], "stale_docs": []}
+{"id": "P8", "type": "paraphrase", "role": "staff", "q": "冷蔵庫の温度が高いときはどうすればいい？", "gold": [{"doc": "D04", "span": "30分後に再測定"}], "answer": "30分後に再測定、超えていれば移し替えて連絡", "forbidden_docs": [], "stale_docs": []}
+{"id": "P9", "type": "paraphrase", "role": "manager", "q": "返金を求められた。いくらまでならその場で返せる？", "gold": [{"doc": "D12", "span": "1件5,000円まで"}], "answer": "店長裁量で5,000円まで", "forbidden_docs": [], "stale_docs": []}
+{"id": "P10", "type": "paraphrase", "role": "staff", "q": "アルバイトでも健康診断は受けられる？", "gold": [{"doc": "D13", "span": "週30時間以上"}], "answer": "週30時間以上なら受けられる", "forbidden_docs": [], "stale_docs": []}
+{"id": "P11", "type": "paraphrase", "role": "staff", "q": "休みの日に出勤したら手当はいくら？", "gold": [{"doc": "D01", "span": "1.35を乗じて"}], "answer": "時間単価×1.35", "forbidden_docs": [], "stale_docs": []}
+{"id": "P12", "type": "paraphrase", "role": "staff", "q": "急に休むときはどう連絡すればいい？", "gold": [{"doc": "D01", "span": "2時間前までに店長へ電話"}], "answer": "始業2時間前までに店長へ電話", "forbidden_docs": [], "stale_docs": []}
+{"id": "P13", "type": "paraphrase", "role": "staff", "q": "お客様からお腹を壊したと連絡がありました。", "gold": [{"doc": "D04", "span": "店舗運営課へ報告"}], "answer": "聞き取ってその日のうちに店舗運営課へ報告", "forbidden_docs": [], "stale_docs": []}
+{"id": "P14", "type": "paraphrase", "role": "staff", "q": "仕事用のスマホをなくしてしまいました。", "gold": [{"doc": "D06", "span": "1時間以内に情報システム課"}], "answer": "1時間以内に情報システム課へ報告", "forbidden_docs": [], "stale_docs": []}
+{"id": "T1", "type": "table", "role": "staff", "q": "入社して1年半だと有給は何日もらえる？", "gold": [{"doc": "D01", "span": "| 1年6か月 | 11日 |"}], "answer": "11日", "forbidden_docs": [], "stale_docs": []}
+{"id": "T2", "type": "table", "role": "staff", "q": "勤続7年だと有給は何日？", "gold": [{"doc": "D01", "span": "| 6年6か月以上 | 20日 |"}], "answer": "20日", "forbidden_docs": [], "stale_docs": []}
+{"id": "T3", "type": "table", "role": "staff", "q": "有給を使い切れなかったらどうなりますか？", "gold": [{"doc": "D01", "span": "翌年度に限り繰り越す"}], "answer": "翌年度に限り繰り越し", "forbidden_docs": [], "stale_docs": []}
+{"id": "S1", "type": "stale", "role": "staff", "q": "交通費は1日いくらまで精算できますか？", "gold": [{"doc": "D03", "span": "3,000円"}], "answer": "3,000円", "forbidden_docs": [], "stale_docs": ["D02"]}
+{"id": "S2", "type": "stale", "role": "staff", "q": "経費の申請期限はいつまで？", "gold": [{"doc": "D03", "span": "翌月10日"}], "answer": "翌月10日", "forbidden_docs": [], "stale_docs": ["D02"]}
+{"id": "S3", "type": "stale", "role": "staff", "q": "領収書は紙の原本を送らないといけませんか？", "gold": [{"doc": "D03", "span": "スマートフォンで撮影"}], "answer": "撮影して添付でよい", "forbidden_docs": [], "stale_docs": ["D02"]}
+{"id": "A1", "type": "acl", "role": "manager", "q": "店長の基本給はいくらですか？", "gold": [], "answer": "(権限外のため回答しない)", "forbidden_docs": ["D09"], "stale_docs": []}
+{"id": "A2", "type": "acl", "role": "staff", "q": "評価ランクごとの昇給率を教えて", "gold": [], "answer": "(権限外のため回答しない)", "forbidden_docs": ["D08"], "stale_docs": []}
+{"id": "A3", "type": "acl", "role": "hr", "q": "評価Aだと昇給率は何％？", "gold": [{"doc": "D08", "span": "A が3%"}], "answer": "3%", "forbidden_docs": [], "stale_docs": []}
+{"id": "A4", "type": "acl", "role": "staff", "q": "シフトは前月の何日までに作られる？", "gold": [], "answer": "(権限外のため回答しない)", "forbidden_docs": ["D07"], "stale_docs": []}
+{"id": "A5", "type": "acl", "role": "manager", "q": "シフトはいつまでに作ればいい？", "gold": [{"doc": "D07", "span": "前月20日まで"}], "answer": "前月20日まで", "forbidden_docs": [], "stale_docs": []}
+{"id": "A6", "type": "acl", "role": "manager", "q": "冬の新メニューはいつから出す？", "gold": [{"doc": "D10", "span": "11月15日から"}], "answer": "11月15日から", "forbidden_docs": [], "stale_docs": []}
+{"id": "N1", "type": "noanswer", "role": "staff", "q": "制服のクリーニング代は会社が出してくれますか？", "gold": [], "answer": "(資料に記載なし)", "forbidden_docs": [], "stale_docs": []}
+{"id": "N2", "type": "noanswer", "role": "staff", "q": "育児休業は何か月取れますか？", "gold": [], "answer": "(資料に記載なし)", "forbidden_docs": [], "stale_docs": []}
+{"id": "N3", "type": "noanswer", "role": "staff", "q": "店舗のWi-Fiのパスワードを教えて", "gold": [], "answer": "(資料に記載なし)", "forbidden_docs": [], "stale_docs": []}
+{"id": "N4", "type": "noanswer", "role": "staff", "q": "退職金はいつ支払われますか？", "gold": [], "answer": "(資料に記載なし)", "forbidden_docs": [], "stale_docs": []}
+{"id": "M1", "type": "multi", "role": "manager", "q": "12月の土曜に家族で行っても従業員割引は使える？予約は何時間まで？", "gold": [{"doc": "D13", "span": "12月の金曜・土曜は対象外"}, {"doc": "D10", "span": "最大2時間制"}], "answer": "割引は対象外・予約は最大2時間", "forbidden_docs": [], "stale_docs": []}
+{"id": "K6", "type": "keyword", "role": "staff", "q": "E-222が出たらカードは使える？", "gold": [{"doc": "D11", "span": "E-222 は決済センター"}], "answer": "使えない。現金で対応", "forbidden_docs": [], "stale_docs": []}
+{"id": "K7", "type": "keyword", "role": "staff", "q": "E-212の直し方は？", "gold": [{"doc": "D11", "span": "E-212 はハンディ端末と POS の通信断"}], "answer": "ハンディ端末を再起動しWi-Fiに再接続", "forbidden_docs": [], "stale_docs": []}
+{"id": "K8", "type": "keyword", "role": "staff", "q": "E-401って対応が必要？", "gold": [{"doc": "D11", "span": "E-401 は売上日報の送信失敗"}], "answer": "不要（翌朝自動再送）", "forbidden_docs": [], "stale_docs": []}
+{"id": "F1", "type": "paraphrase", "role": "staff", "q": "給料は毎月何日に振り込まれますか？", "gold": [{"doc": "D14", "span": "毎月25日に指定口座"}], "answer": "毎月25日", "forbidden_docs": [], "stale_docs": []}
+{"id": "F2", "type": "paraphrase", "role": "staff", "q": "マイカー通勤はできますか？", "gold": [{"doc": "D14", "span": "従業員の駐車はできません"}], "answer": "できない。公共交通機関か自転車", "forbidden_docs": [], "stale_docs": []}
+{"id": "F3", "type": "paraphrase", "role": "staff", "q": "打刻し忘れちゃった", "gold": [{"doc": "D14", "span": "打刻修正を申請"}], "answer": "勤怠システムで当日中に修正申請", "forbidden_docs": [], "stale_docs": []}
+{"id": "F4", "type": "paraphrase", "role": "staff", "q": "勤務中に結婚指輪はつけていていい？", "gold": [{"doc": "D14", "span": "結婚指輪も外してください"}], "answer": "外す", "forbidden_docs": [], "stale_docs": []}
+{"id": "F5", "type": "paraphrase", "role": "staff", "q": "予約の電話で確認することは？", "gold": [{"doc": "D14", "span": "5点を必ず聞き"}], "answer": "日時・人数・名前・電話番号・アレルギー", "forbidden_docs": [], "stale_docs": []}
+{"id": "F6", "type": "paraphrase", "role": "staff", "q": "お客さんの財布の忘れ物はどうする？", "gold": [{"doc": "D14", "span": "当日中に警察へ届けます"}], "answer": "当日中に警察へ", "forbidden_docs": [], "stale_docs": []}
+{"id": "N5", "type": "noanswer", "role": "staff", "q": "社員寮はありますか？", "gold": [], "answer": "(資料に記載なし)", "forbidden_docs": [], "stale_docs": []}

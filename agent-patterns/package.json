@@ -1,0 +1,25 @@
+{
+  "name": "agent-patterns",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "tsx test/offline.ts",
+    "smoke": "ANTHROPIC_API_KEY=stub tsx test/smoke.ts",
+    "p1": "tsx src/p1-chaining.ts",
+    "p2": "tsx src/p2-routing.ts",
+    "p3": "tsx src/p3-parallel.ts",
+    "p4": "tsx src/p4-orchestrator.ts",
+    "p5": "tsx src/p5-evaluator.ts",
+    "p6": "tsx src/p6-rag.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.3.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2"
+  }
+}

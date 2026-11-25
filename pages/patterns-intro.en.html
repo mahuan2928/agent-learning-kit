@@ -1,0 +1,349 @@
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Design Patterns: A Beginner’s Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Patterns intro: single-column reading. Each pattern = kitchen metaphor + one flow + one real example; a pick-the-pattern quiz at the end */
+:root{
+  --paper:#F1F3F3; --surface:#FBFCFC; --surface-2:#E8ECEB;
+  --ink:#141A1C; --ink-2:#3B4749; --muted:#5F6C6E; --faint:#8A9698;
+  --rule:#D2DAD9; --rule-strong:#B6C1C0;
+  --a1:#0B6E6E; --a1-bg:#DCEAE9;
+  --a2:#A8631A; --a2-bg:#F2E6D4;
+  --ok:#1C7A4A; --ok-bg:#DAEDE2;
+  --danger:#A93B2F; --danger-bg:#F2DEDA;
+  --code-bg:#EAEEED;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --shadow:0 1px 0 rgba(20,26,28,.04), 0 2px 10px rgba(20,26,28,.05);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1315; --surface:#151C1E; --surface-2:#1C2527;
+  --ink:#DDE5E4; --ink-2:#B4C0BF; --muted:#8B9A9B; --faint:#6B7A7B;
+  --rule:#25302F; --rule-strong:#33403F;
+  --a1:#57C6C0; --a1-bg:#0F2E2E; --a2:#DBA054; --a2-bg:#2E2415;
+  --ok:#5CC68D; --ok-bg:#0F2A1D; --danger:#EE8D7E; --danger-bg:#2E1B18;
+  --code-bg:#111819; --shadow:0 1px 0 rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0E1315; --surface:#151C1E; --surface-2:#1C2527;
+  --ink:#DDE5E4; --ink-2:#B4C0BF; --muted:#8B9A9B; --faint:#6B7A7B;
+  --rule:#25302F; --rule-strong:#33403F;
+  --a1:#57C6C0; --a1-bg:#0F2E2E; --a2:#DBA054; --a2-bg:#2E2415;
+  --ok:#5CC68D; --ok-bg:#0F2A1D; --danger:#EE8D7E; --danger-bg:#2E1B18;
+  --code-bg:#111819; --shadow:0 1px 0 rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.66;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding:0 26px 110px}
+@media(max-width:560px){.shell{padding:0 16px 80px}}
+.layout{display:grid;grid-template-columns:1fr;gap:0}
+.layout>*{min-width:0}
+main{min-width:0;max-width:100%}
+@media(min-width:1060px){.layout{grid-template-columns:186px minmax(0,1fr);gap:50px;align-items:start}}
+a{color:var(--a1);text-underline-offset:2px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--a1);outline-offset:3px}
+
+.masthead{border-bottom:2px solid var(--ink);padding:42px 0 18px}
+.stamp{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:24px}
+.stamp b{color:var(--a1);font-weight:600}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(36px,6vw,58px);line-height:1.03;letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance}
+.dek{font-size:18.5px;color:var(--ink-2);max-width:60ch;margin:0 0 24px;line-height:1.55}
+.dek em{color:var(--a1);font-style:normal;font-weight:600}
+
+.rail{display:none}
+@media(min-width:1060px){.rail{display:block;position:sticky;top:0;padding-top:36px;max-height:100vh;overflow-y:auto;font-family:var(--f-mono);border-right:1px solid var(--rule);padding-right:20px;margin-right:-20px}}
+.rail h2{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:500;margin:0 0 12px;font-family:var(--f-mono)}
+.rail ol{list-style:none;margin:0;padding:0}
+.rail li{margin-bottom:2px}
+.rail a{display:grid;grid-template-columns:26px 1fr;gap:8px;font-size:12.5px;text-decoration:none;color:var(--ink-2);padding:4px 6px 4px 0;line-height:1.35;border-radius:2px}
+.rail a:hover{color:var(--a1);background:var(--surface)}
+.rail a span:first-child{color:var(--faint);font-weight:500}
+
+.stage{padding-top:52px;scroll-margin-top:16px}
+.stage-head{border-top:2px solid var(--ink);padding-top:14px;margin-bottom:22px}
+.stage-num{font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--a1);display:block;margin-bottom:9px}
+.stage h2{font-family:var(--f-display);font-weight:700;font-size:clamp(25px,3.6vw,34px);line-height:1.12;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.goal{border-left:3px solid var(--a1);background:var(--surface);padding:14px 18px;margin:18px 0 22px;max-width:66ch;box-shadow:var(--shadow)}
+.goal .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--a1);display:block;margin-bottom:5px;font-weight:600}
+.goal p{margin:0;font-size:17.5px;line-height:1.52}
+.ref{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin:-8px 0 18px}
+.ref b{color:var(--a1);font-weight:600}
+
+h3{font-family:var(--f-display);font-weight:600;font-size:19px;margin:34px 0 12px;max-width:66ch;text-wrap:balance}
+p{margin:0 0 15px;max-width:66ch}
+ul,ol{max-width:66ch;padding-left:22px;margin:0 0 16px}
+li{margin-bottom:6px}
+li::marker{color:var(--faint)}
+strong{font-weight:600;color:var(--ink)}
+code{font-family:var(--f-mono);font-size:.87em;background:var(--code-bg);padding:1px 5px;border-radius:2px;border:1px solid var(--rule)}
+pre{font-family:var(--f-mono);font-size:12.5px;line-height:1.6;background:var(--code-bg);border:1px solid var(--rule);border-left:3px solid var(--a1);padding:16px 18px;overflow-x:auto;margin:0 0 20px;max-width:min(100%,980px);tab-size:2}
+pre code{background:none;border:none;padding:0;font-size:inherit}
+
+/* Code file block: file header + diff / full text + expandable full file */
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 22px;max-width:min(100%,980px);font-family:var(--f-mono);font-size:12px}
+.chips .lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.chips ul{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px 14px;max-width:none}
+.chips li{margin:0;display:flex;align-items:center;gap:6px}
+.chips code{background:none;border:none;padding:0;font-size:12px}
+.file{margin:0 0 22px;max-width:min(100%,980px)}
+.fh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-family:var(--f-mono);font-size:12.5px;padding:8px 12px;background:var(--surface-2);border:1px solid var(--rule);border-bottom:none}
+.fh b{font-weight:600;color:var(--ink)}
+.fh .meta{margin-left:auto;color:var(--muted);font-size:11.5px}
+.badge{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:1px 7px;border-radius:2px;font-weight:600;white-space:nowrap}
+.badge.new{background:var(--ok-bg);color:var(--ok)}
+.badge.mod{background:var(--a2-bg);color:var(--a2)}
+.plus{color:var(--ok)} .minus{color:var(--danger)}
+pre.code{padding:10px 0;margin:0;max-width:100%}
+pre.code code{display:inline-block;min-width:100%}
+.l{display:block;white-space:pre;padding-right:16px}
+.l i{display:inline-block;width:3.6em;padding-right:1.1em;text-align:right;color:var(--faint);font-style:normal;user-select:none;-webkit-user-select:none}
+.l.add{background:var(--ok-bg)} .l.add i{color:var(--ok)}
+.l.del{background:var(--danger-bg);color:var(--ink-2)} .l.del i{color:var(--danger)}
+.l.hunk{background:var(--surface-2);color:var(--muted);font-size:11px;margin:4px 0}
+.l.hunk:first-child{margin-top:-10px}
+details.full>summary{cursor:pointer;font-family:var(--f-mono);font-size:12px;color:var(--a1);padding:8px 12px;border:1px solid var(--rule);border-top:none;background:var(--surface);list-style:none}
+details.full>summary::-webkit-details-marker{display:none}
+details.full>summary::before{content:"▸ ";color:var(--faint)}
+details.full[open]>summary::before{content:"▾ "}
+details.full pre{border-top:none}
+
+.run{border:1px solid var(--rule-strong);background:var(--surface);margin:0 0 20px;max-width:min(100%,980px);box-shadow:var(--shadow)}
+.run-h{font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;padding:9px 16px;border-bottom:1px solid var(--rule);background:var(--surface-2);color:var(--muted)}
+.run-b{padding:14px 16px}
+.run-b pre{margin:0 0 10px;border-left-color:var(--rule-strong)}
+.run-b pre:last-child{margin-bottom:0}
+
+.see,.break,.note,.wire{padding:13px 18px;margin:0 0 20px;max-width:min(100%,980px)}
+.see{border-left:3px solid var(--ok);background:var(--ok-bg)}
+.break{border-left:3px solid var(--danger);background:var(--danger-bg)}
+.note{border-left:3px solid var(--a2);background:var(--a2-bg)}
+.wire{border:1px dashed var(--rule-strong);background:var(--surface)}
+.see .lbl,.break .lbl,.note .lbl,.wire .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px}
+.see .lbl{color:var(--ok)} .break .lbl{color:var(--danger)} .note .lbl{color:var(--a2)} .wire .lbl{color:var(--a1)}
+.see p,.break p,.note p,.wire p{margin:0;max-width:64ch}
+.see p+p,.break p+p,.note p+p,.wire p+p{margin-top:9px}
+.wire ol{margin:4px 0 0;padding-left:20px}
+.wire li{margin-bottom:3px}
+
+.tw{overflow-x:auto;margin:0 0 22px;max-width:min(100%,980px);border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface);min-width:480px}
+th{font-family:var(--f-display);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 13px;border-bottom:1.5px solid var(--rule-strong);background:var(--surface-2)}
+td{padding:10px 13px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.48}
+tbody tr:last-child td{border-bottom:none}
+td code{font-size:12px}
+
+.setup{border:1px solid var(--rule);background:var(--surface);padding:20px 22px;margin:0 0 10px;box-shadow:var(--shadow)}
+.setup>h2{font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:500;margin:0 0 12px}
+.setup h3{margin:22px 0 10px;font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--f-mono);font-size:12px;margin:0 0 14px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:14px;height:14px;border:1px solid var(--rule-strong)}
+.sw.add{background:var(--ok-bg)} .sw.del{background:var(--danger-bg)}
+.map{list-style:none;padding:0;margin:0 0 20px;display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);max-width:min(100%,980px)}
+.map li{margin:0;background:var(--paper);padding:10px 14px;display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:baseline;font-size:14.5px}
+.map .k{font-family:var(--f-mono);font-size:11.5px;color:var(--a1);font-weight:600}
+@media(max-width:560px){.map li{grid-template-columns:1fr;gap:2px}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.rail a{grid-template-columns:30px 1fr}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 6px;margin:0 0 20px;padding:14px 16px;background:var(--surface);border:1px solid var(--rule);max-width:min(100%,980px);font-family:var(--f-mono);font-size:12.5px;line-height:1.35}
+.flow .n{padding:6px 10px;border-radius:3px;border:1px solid var(--rule-strong);background:var(--paper);color:var(--ink)}
+.flow .n small{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.flow .llm{border-color:var(--a1);background:var(--a1-bg)}
+.flow .code{border-style:dashed;border-color:var(--a2);background:var(--a2-bg)}
+.flow .human{border-color:var(--ok);background:var(--ok-bg)}
+.flow .ar{color:var(--faint)}
+.flow .br{flex-basis:100%;height:0}
+.flow .side{color:var(--muted);font-size:11.5px}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin:-10px 0 18px}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:12px;height:12px;border:1px solid}
+.key .llm{background:var(--a1-bg);border-color:var(--a1)} .key .code{background:var(--a2-bg);border-color:var(--a2);border-style:dashed} .key .human{background:var(--ok-bg);border-color:var(--ok)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:0 0 22px;max-width:min(100%,980px)}
+.facts div{background:var(--surface);padding:12px 14px}
+.facts b{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--a1);margin-bottom:4px}
+.facts p{margin:0;font-size:15px;line-height:1.5}
+.qa{border:1px solid var(--rule);background:var(--surface);margin:0 0 22px;max-width:min(100%,980px)}
+.qa .lbl{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--a1);padding:10px 16px;border-bottom:1px solid var(--rule);background:var(--surface-2)}
+.qa .body{padding:14px 16px}
+.qa .body p{max-width:70ch}
+.qa dl{margin:0}
+.qa dt{font-weight:600;margin:12px 0 4px}
+.qa dd{margin:0;color:var(--ink-2);max-width:70ch}
+td.y{color:var(--ok);font-weight:600} td.n{color:var(--danger);font-weight:600}
+
+.intro main{max-width:820px}
+.analogy{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:0 0 22px}
+.analogy div{background:var(--surface);padding:14px 16px}
+.analogy b{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--a1);margin-bottom:6px}
+.analogy p{margin:0;font-size:15.5px;line-height:1.55}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);margin:0 0 22px}
+.split div{background:var(--surface);padding:14px 16px}
+.split h4{font-family:var(--f-display);font-size:16px;margin:0 0 6px}
+.split ul{margin:0;padding-left:18px;font-size:15px}
+@media(max-width:560px){.split{grid-template-columns:1fr}}
+.pat{border:1px solid var(--rule-strong);background:var(--surface);margin:0 0 18px;box-shadow:var(--shadow)}
+.pat-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:12px 16px;border-bottom:1px solid var(--rule)}
+.pat-h .no{font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--a1);letter-spacing:.12em}
+.pat-h h3{margin:0;font-size:19px}
+.pat-h .en{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.pat-b{padding:14px 16px;display:grid;gap:12px}
+.pat-b p{margin:0}
+.kitchen{font-size:15.5px;background:var(--a2-bg);border-left:3px solid var(--a2);padding:10px 14px}
+.kitchen b{color:var(--a2)}
+.flow{margin:0}
+.facts2{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:15px}
+.facts2 dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--muted);padding-top:3px}
+.facts2 dd{margin:0}
+/* Quiz */
+.quiz{border:2px solid var(--ink);background:var(--surface);margin:0 0 24px}
+.quiz-h{padding:12px 16px;border-bottom:1px solid var(--rule);background:var(--surface-2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.quiz-h .t{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+.quiz-h .score{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.qitem{padding:14px 16px;border-bottom:1px solid var(--rule)}
+.qitem:last-child{border-bottom:none}
+.qitem .sc{margin:0 0 10px;font-size:16px}
+.qitem .sc small{font-family:var(--f-mono);color:var(--a1);margin-right:6px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{font:inherit;font-size:13.5px;padding:5px 11px;border:1px solid var(--rule-strong);background:var(--paper);color:var(--ink);border-radius:999px;cursor:pointer}
+.opts button:hover:not(:disabled){border-color:var(--a1)}
+.opts button:focus-visible{outline:2px solid var(--a1);outline-offset:2px}
+.opts button.right{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);font-weight:600}
+.opts button.wrong{background:var(--danger-bg);border-color:var(--danger);color:var(--danger)}
+.opts button:disabled{cursor:default}
+.fb{margin-top:10px;font-size:15px;padding:10px 14px;background:var(--paper);border-left:3px solid var(--ok)}
+.fb.no{border-left-color:var(--danger)}
+.fb p{margin:0}
+</style>
+<a class="lang-switch" href="patterns-intro.html" hreflang="zh-CN" style="position:fixed;top:12px;right:16px;z-index:999;font:600 13px/1 -apple-system,BlinkMacSystemFont,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid rgba(127,127,127,.35);background:rgba(255,255,255,.92);color:#0B6E6E;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.08)">中文</a>
+<div class="shell intro">
+<header class="masthead">
+  <div class="stamp"><span>Beginner</span><span>Next up <b>Agent Design Patterns in Practice</b></span><span>About 30 minutes</span></div>
+  <h1>Agent Design Patterns: A Beginner’s Guide</h1>
+  <p class="dek">The six most common design patterns, all explained through a <em>restaurant kitchen</em>. You don’t need to code, and you don’t need to know what an agent is yet. At the end there’s a short quiz: we give you a business scenario, and you pick the pattern that fits.</p>
+</header>
+<main>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">01 · Three things to tell apart</span><h2>A single call, a workflow, an agent</h2></div>
+  <div class="analogy">
+    <div><b>A single call</b><p>You ask a cook for one dish. You say exactly what you want, and they bring it out.</p></div>
+    <div><b>Workflow</b><p>The kitchen has a set routine: prep, cook, plate, check. <strong>The manager sets the routine</strong>; each cook only handles a few of the steps.</p></div>
+    <div><b>Agent</b><p>You hand a cook a budget and let them <strong>decide for themselves</strong> what to buy, what to cook and how many dishes to make, until the job is done.</p></div>
+  </div>
+  <p>Of the six patterns on this page, the first five are all <strong>workflows</strong>: the steps are written into the program, and the model only handles the steps that need to “understand language.” In real work, a workflow is enough for most needs. It’s cheaper, the results are more consistent, and when something goes wrong you know which step broke. The part where the model makes its own decisions (the agent part) should be as rare and as small as possible.</p>
+</section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">02 · The whole idea in one line</span><h2>What goes to the model, and what goes to code</h2></div>
+  <p>Every design pattern answers the same question: once you break a job into steps, <strong>who should do each step?</strong></p>
+  <div class="split">
+    <div><h4>Give it to the model (it understands language)</h4><ul><li>Classify: is this message a complaint or a booking?</li><li>Organize: turn handwritten notes into key points</li><li>Write: draft a reply, draft a proposal</li><li>Judge: is the tone of this reply right?</li></ul></div>
+    <div><h4>Give it to code (rules and math)</h4><ul><li>Check the length and look for banned words</li><li>Add up sales, work out growth rates</li><li>Check whether someone has permission</li><li>Decide how many retries are allowed and when to stop</li></ul></div>
+  </div>
+  <p>Rule of thumb: <strong>if you can write it as a rule, give it to code</strong>. Code doesn’t make mistakes, costs nothing to run, and gives the same result every time. The model only does the parts you can’t write rules for. In each pattern’s flow below, blue is the model, dashed orange is code, and green is a hand-off to a person.</p>
+  <div class="key"><span><i class="llm"></i>Model</span><span><i class="code"></i>Code</span><span><i class="human"></i>Hand off to a person</span></div>
+</section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">03 · Six patterns</span><h2>One kitchen metaphor for each pattern</h2></div>
+  <div class="pat" id="p1"><div class="pat-h"><span class="no">Pattern 1</span><h3>Assembly line</h3><span class="en">Prompt Chaining</span></div><div class="pat-b"><p class="kitchen"><b>In the kitchen: </b>Prep → cook → plate, and <strong>every step gets a quick check</strong> before it moves on. If prep finds the main ingredient is missing, the line stops. Nobody pushes ahead and cooks anyway.</p><div class="flow"><span class="n llm">Model: organize</span><span class="ar">→</span><span class="n code">Code: check</span><span class="ar">→</span><span class="n llm">Model: write</span><span class="ar">→</span><span class="n code">Code: check</span></div><dl class="facts2"><dt>Real example</dt><dd>Turn handwritten notes from a customer meeting into key points. Check that the basics (number of stores, the customer’s problems) are all there. Only then draft the proposal outline, and check the draft for internal jargon.</dd><dt>Good for</dt><dd>Fixed steps, where every step can be checked.</dd><dt>Not for</dt><dd>Cases where the steps depend on the situation (use Pattern 4).</dd></dl></div></div><div class="pat" id="p2"><div class="pat-h"><span class="no">Pattern 2</span><h3>Sorting the orders</h3><span class="en">Routing</span></div><div class="pat-b"><p class="kitchen"><b>In the kitchen: </b>The front desk sorts each order as it comes in: <strong>drinks go to the bar, hot dishes go to the kitchen, complaints go straight to the manager</strong>. The person sorting doesn’t need to cook. They just need to sort fast and sort right.</p><div class="flow"><span class="n n">A new message</span><span class="ar">→</span><span class="n llm">A cheap model sorts it</span><span class="ar">→</span><span class="n n">FAQ → auto-reply</span><span class="n n">Complaint → draft for a person to review</span><span class="n human">Urgent → straight to a person</span></div><dl class="facts2"><dt>Real example</dt><dd>Customer messages for a restaurant chain. Booking changes and receipt requests get an auto-reply. Complaints get a draft reply for the store manager to approve. Health issues like “my stomach hurt after eating” are never left to the model: a keyword rule sends them straight to a person.</dd><dt>Good for</dt><dd>Incoming items that vary a lot, where each type is handled differently.</dd><dt>Not for</dt><dd>Cases where everything is really handled the same way.</dd></dl></div></div><div class="pat" id="p3"><div class="pat-h"><span class="no">Pattern 3</span><h3>Split the work / Take a vote</h3><span class="en">Parallelization</span></div><div class="pat-b"><p class="kitchen"><b>In the kitchen: </b><strong>Split the work</strong>: before a dish goes out, three people check it at the same time. One checks the portion, one the temperature, one the plating. <strong>Take a vote</strong>: if you’re unsure about a new dish, three people taste it separately, and it only goes on the menu if most of them like it.</p><div class="flow"><span class="n n">One draft</span><span class="ar">→</span><span class="n llm">Check the numbers</span><span class="n llm">Check the politeness</span><span class="n llm">Check it’s fit for the customer</span><span class="ar">→</span><span class="n code">Combine the results</span></div><dl class="facts2"><dt>Real example</dt><dd>Check a draft proposal from three angles at once. Or, to decide whether a message is trying to trick the system into revealing information, ask three times and go with the majority; if the answers disagree, hand it to a person.</dd><dt>Good for</dt><dd>Angles that don’t depend on each other, or a judgment that isn’t reliable enough from one try.</dd><dt>Not for</dt><dd>Angles that must happen in order (use Pattern 1).</dd></dl></div></div><div class="pat" id="p4"><div class="pat-h"><span class="no">Pattern 4</span><h3>The head chef hands out jobs</h3><span class="en">Orchestrator-Workers</span></div><div class="pat-b"><p class="kitchen"><b>In the kitchen: </b>The head chef looks at today’s orders and <strong>decides on the spot</strong> how many helpers to use and who does what. Everyone works on their own part, and at the end the head chef puts it all together on the plate. Lots of orders today, more helpers; fewer orders, fewer helpers.</p><div class="flow"><span class="n llm">Head chef: decide how to split</span><span class="ar">→</span><span class="n llm">Helper 1</span><span class="n llm">Helper 2</span><span class="n llm">Helper 3</span><span class="ar">→</span><span class="n llm">Head chef: combine</span></div><dl class="facts2"><dt>Real example</dt><dd>A regional director asks, “Which stores had problems this week?” The main model looks at which stores have data and decides how many groups to check. Each helper uses code to crunch the numbers, and everything is combined into one report.</dd><dt>Good for</dt><dd>When you can’t know how many parts there are, or what each part is, until you see the material.</dd><dt>Not for</dt><dd>When the split is fixed in advance (use Pattern 3; it’s cheaper).</dd></dl></div></div><div class="pat" id="p5"><div class="pat-h"><span class="no">Pattern 5</span><h3>Taste and improve</h3><span class="en">Evaluator-Optimizer</span></div><div class="pat-b"><p class="kitchen"><b>In the kitchen: </b>Once a dish is ready, <strong>someone else</strong> tastes it against a standard and points out problems: too salty, gone cold, messy plating. The cook fixes it based on the feedback, <strong>three tries at most</strong>. If it still isn’t right, someone else takes over.</p><div class="flow"><span class="n llm">Model: write</span><span class="ar">→</span><span class="n code">Code: check length, etc.</span><span class="ar">→</span><span class="n llm">A second model: score it</span><span class="ar">→</span><span class="n n">Pass → use it</span><span class="side">　Fail → rewrite with the feedback, up to 3 times</span></div><dl class="facts2"><dt>Real example</dt><dd>Replying to a bad Google review. First, code checks the length and makes sure no staff names appear. Then a second model scores it: does it apologize? Does it make excuses? If it fails, rewrite.</dd><dt>Good for</dt><dd>When “good enough” can be clearly defined, and a revision really does make it better.</dd><dt>Not for</dt><dd>When the standard is vague, or the first try is already good enough.</dd></dl></div></div><div class="pat" id="p6"><div class="pat-h"><span class="no">Pattern 6</span><h3>Look it up in the recipe book</h3><span class="en">Agentic RAG</span></div><div class="pat-b"><p class="kitchen"><b>In the kitchen: </b>When a cook meets a dish they don’t know, <strong>they look it up in the recipe book themselves</strong>. If the first search finds nothing, they try different words. When they’re done, they tell you which page they followed. If the recipe isn’t in the book, they say so instead of making something up.</p><div class="flow"><span class="n n">Question</span><span class="ar">→</span><span class="n llm">Model: decide what to search for</span><span class="ar">→</span><span class="n code">Code: search the documents</span><span class="ar">→</span><span class="n llm">Model: nothing found? try other words</span><span class="ar">→</span><span class="n llm">Answer + source</span></div><dl class="facts2"><dt>Real example</dt><dd>Answering a customer’s security questionnaire from the company’s security documents. The customer writes “BCP,” but the documents say 事業継続 (Japanese for “business continuity”), so the model rephrases and searches again. For how this works under the hood, see <a href="rag-intro.en.html">RAG: A Beginner’s Guide</a>.</dd><dt>Good for</dt><dd>The answer is in the documents, but the question uses different words than the documents do.</dd><dt>Not for</dt><dd>Small sets of documents that you can simply hand to the model in full.</dd></dl></div></div>
+</section>
+
+<section class="stage" id="quiz-sec">
+  <div class="stage-head"><span class="stage-num">04 · Quiz</span><h2>Which pattern fits this scenario?</h2></div>
+  <p>Pick one answer per question, and you’ll see why right away. For one question, the answer is “No pattern (a single call)”, and that is the most common right answer in real life.</p>
+  <div class="quiz" id="quiz"><div class="quiz-h"><span class="t">Pick the pattern</span><span class="score" id="score">0 / 7</span></div></div>
+</section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">05 · Putting them together</span><h2>Real systems rarely use just one pattern</h2></div>
+  <p>Take a <strong>customer inquiry system</strong>, for example:</p>
+  <ol>
+    <li>First, <strong>sort the orders</strong> (Pattern 2): split bookings, complaints and urgent issues.</li>
+    <li>For questions about bookings and policies, <strong>look it up in the recipe book</strong> (Pattern 6): find the answer in company documents and cite the source.</li>
+    <li>For replies going to customers, <strong>taste and improve</strong> (Pattern 5): check the tone, the length and any mistakes, and rewrite if it fails.</li>
+  </ol>
+  <p>In an interview, talking about combinations is far more convincing than reciting definitions one by one: it shows you know which part of the problem each pattern solves.</p>
+</section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">06 · Mini glossary</span><h2>Terms you’ll meet on the hands-on page</h2></div>
+  <div class="tw"><table>
+    <thead><tr><th>Term</th><th>In one sentence</th></tr></thead>
+    <tbody>
+      <tr><td>Workflow</td><td>The program decides the steps; the model only does some of them</td></tr>
+      <tr><td>Agent</td><td>The model decides for itself what to do next and when it’s done</td></tr>
+      <tr><td>Tool</td><td>Something the model can ask the program to do for it, like searching documents, reading a file or doing math</td></tr>
+      <tr><td>Structured output</td><td>Having the model answer in a fixed format (like a JSON table), so the program can read and check it directly</td></tr>
+      <tr><td>Gate</td><td>A check between two steps; if it fails, the work doesn’t move on</td></tr>
+      <tr><td>Judge</td><td>A model call whose only job is scoring, kept separate from the call that does the writing</td></tr>
+      <tr><td>Fan-out</td><td>Sending out many helpers to work at the same time; always set a limit</td></tr>
+      <tr><td>Trace</td><td>A record of which model each step used and how much money and time it took, for comparing and debugging</td></tr>
+      <tr><td>Prompt injection</td><td>Someone writes “ignore your previous instructions” in the input to make the model misbehave; treat outside input as data, never as instructions</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">07 · What’s next</span><h2>How to get from here to the hands-on page</h2></div>
+  <ol>
+    <li><strong>Today</strong>: get every quiz question right, and be able to describe each of the 6 patterns in one sentence using the kitchen metaphor.</li>
+    <li><strong>Tomorrow</strong>: open <a href="agent-patterns.en.html">Design Patterns in Practice</a>. For each pattern, read only the flow diagram and the “Real example” box, and <strong>skip the code for now</strong>. Suggested order: 2 Sorting the orders → 1 Assembly line → 5 Taste and improve → 3 Split the work / Take a vote → 6 Look it up in the recipe book → 4 The head chef hands out jobs.</li>
+    <li><strong>Day three</strong>: for each pattern, read the “Break it on purpose” section. It shows what goes wrong if you don’t design it this way, which is exactly where interviewers like to dig in.</li>
+    <li><strong>Last</strong>: once you have an API key, run the code.</li>
+  </ol>
+  <div class="qa"><span class="lbl">A beginner-level interview answer</span><div class="body">
+    <p><strong>“Which agent design patterns do you know?” </strong>There are six common ones: the assembly line, sorting (routing), splitting the work and voting, the head chef handing out jobs, taste-and-improve, and question answering with search. What they have in common is that they break a job into steps, give the rules and math to code, and give the language-understanding parts to the model. I always start by asking whether a single call can do the job; if it can, I don’t use a pattern at all. If the steps are fixed, I use a workflow. Only the parts whose steps can’t be written down in advance are left to the model to decide, and I always use code to put limits on it.</p>
+  </div></div>
+</section>
+</main></div>
+
+<script>
+const PATS = ["No pattern (a single call)", "1 Assembly line", "2 Sorting the orders", "3 Split the work / Take a vote", "4 The head chef hands out jobs", "5 Taste and improve", "6 Look it up in the recipe book"];
+const Q = [
+  { s: "Dozens of customer messages come in every day. They need to be sorted into “booking change,” “complaint” and “urgent (feeling unwell),” and each type goes to a different person or process.", a: 2,
+     why: "Different kinds of input, each handled differently: that’s sorting the orders. Note that urgent cases like “feeling unwell” are best caught by a keyword rule, not left to the model to classify." },
+  { s: "Translate one customer email from Japanese into English, just for yourself to read.", a: 0,
+     why: "A single call does this fine, so no pattern is needed. Asking “can one call handle it?” is the first step in picking a pattern, and also the step people skip most often." },
+  { s: "Turn handwritten notes from a sales visit into key points, check that the key details are all there, draft a proposal outline only if they are, then check the draft for internal jargon.", a: 1,
+     why: "Fixed steps, with a check possible between each one: that’s an assembly line. When details are missing, stop and list the follow-up questions to ask, instead of letting the model guess." },
+  { s: "Write a reply to a bad Google review: no more than 250 characters, no staff names, apologize without making excuses, and rewrite it if it doesn’t pass.", a: 5,
+     why: "The standard is clear, and a revision makes it better: that’s taste and improve. Use code to check the length and names first (it’s cheap), then have a second model score it against the standard." },
+  { s: "A regional director asks, “Which stores had problems this week?” The number of stores and the data to review change every week.", a: 4,
+     why: "You only know how many groups to make, and what each one should look at, after you see the data: that’s the head chef handing out jobs. All numbers are calculated by code; the model only explains them." },
+  { s: "Before a proposal is finalized, check it from three angles at once: “are the numbers consistent,” “is the polite language appropriate,” and “is there anything the customer shouldn’t see.”", a: 3,
+     why: "The three angles don’t depend on each other and can run at the same time: that’s splitting the work. Each checker looks at only one angle, so it catches more than one person juggling all three." },
+  { s: "Answer a customer’s security questionnaire using the company’s internal security documents. The customer’s wording often doesn’t match the wording in the documents.", a: 6,
+     why: "The answer is in the documents, but the words don’t match, so you need to rephrase and search again: that’s looking it up in the recipe book (question answering with search). Cite the source in the answer, and if the documents don’t cover it, say so." },
+];
+const quiz = document.getElementById("quiz");
+let right = 0;
+Q.forEach((q, i) => {
+  const box = document.createElement("div");
+  box.className = "qitem";
+  box.innerHTML = `<p class="sc"><small>Q${i + 1}</small>${q.s}</p><div class="opts"></div><div class="fbw"></div>`;
+  const opts = box.querySelector(".opts");
+  PATS.forEach((p, k) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = p;
+    b.addEventListener("click", () => {
+      const ok = k === q.a;
+      if (ok) { right++; document.getElementById("score").textContent = `${right} / ${Q.length}`; }
+      opts.querySelectorAll("button").forEach((x, j) => {
+        x.disabled = true;
+        if (j === q.a) x.classList.add("right"); else if (j === k) x.classList.add("wrong");
+      });
+      box.querySelector(".fbw").innerHTML = `<div class="fb${ok ? "" : " no"}"><p><strong>${ok ? "Correct. " : "The answer is “" + PATS[q.a] + "”. "}</strong>${q.why}</p></div>`;
+    });
+    opts.appendChild(b);
+  });
+  quiz.appendChild(box);
+});
+</script>

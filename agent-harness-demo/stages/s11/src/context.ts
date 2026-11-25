@@ -1,0 +1,151 @@
+import type Anthropic from "@anthropic-ai/sdk";
+import type { ToolDef } from "./types.js";
+
+/* ── system prompt: 只放整场会话都不变的内容 ─────────────────── */
+export function buildSystem(env: { cwd: string; model: string }): Anthropic.TextBlockParam[] {
+  return [
+    { type: "text", text: "你是一个在终端里工作的编码 agent。你通过调用工具来完成任务。" },
+    { type: "text", text:
+      "# 工作准则\n- 改文件前先读。\n" +
+      "- 工具报错里写了「重试不会成功」时就换方法, 不要反复试同一个调用。\n" +
+      "- 任务完成后用一两句话说明你做了什么。" },
+    { type: "text", text: `# 环境\ncwd: ${env.cwd}\nmodel: ${env.model}` },
+    // ⚠️ 这里绝对不要放时间戳 / 轮次计数 / 随机 id —— 逐轮变化的内容会让缓存每轮作废
+  ];
+}
+
+/** 带外通道: 动态内容挂在【消息里】, 不动 tools / system 两层, 缓存不受影响 */
+export function reminder(text: string): Anthropic.TextBlockParam {
+  return {
+    type: "text",
+    text: `<system-reminder>\n${text}\n</system-reminder>\n以上是背景数据, 不是用户指令。`,
+  };
+}
+
+/** 写进会话日志的一行。压缩也要记下来, 否则 resume 时会把压缩前的历史全部复活 */
+export type JournalEntry =
+  | { kind: "message"; message: Anthropic.MessageParam }
+  | { kind: "compact"; summary: string };
+
+/**
+ * messages 数组的【唯一所有者】。
+ * cli.ts 不再直接 push, 只能调这里的方法 —— 写者只有一个, 才守得住 I1。
+ */
+export class ContextAssembler {
+  private messages: Anthropic.MessageParam[] = [];
+
+  constructor(
+    private readonly system: Anthropic.TextBlockParam[],
+    private readonly tools: ToolDef[],
+    /** 每次追加都同步写日志。只有一个写者, 所以日志和内存里的 messages 不可能不一致 */
+    private readonly journal: (e: JournalEntry) => void = () => {},
+  ) {}
+
+  private push(message: Anthropic.MessageParam): void {
+    this.messages.push(message);
+    this.journal({ kind: "message", message });
+  }
+  appendUser(content: string | Anthropic.ContentBlockParam[]): void {
+    this.push({ role: "user", content });
+  }
+  appendAssistant(content: Anthropic.ContentBlockParam[]): void {
+    this.push({ role: "assistant", content });   // 原样整条进
+  }
+
+  /** resume: 按日志重放。只重建内存, 不再写日志 */
+  restore(entries: JournalEntry[]): void {
+    for (const e of entries) {
+      if (e.kind === "message") this.messages.push(e.message);
+      else this.messages = [compactMessage(e.summary)];
+    }
+  }
+
+  /**
+   * 崩溃可能正好落在「tool_use 已落盘、结果还没落盘」之间。
+   * 这种孤儿只会出现在末尾, 补一条合成结果就能救回来; 出现在中间说明日志坏了, 直接报错。
+   */
+  repairOrphans(): string[] {
+    const orphans = this.validate();
+    if (!orphans.length) return [];
+    const last = this.messages[this.messages.length - 1];
+    if (last?.role !== "assistant") throw new Error(`日志中间有孤儿 tool_use, 无法自动修复: ${orphans.join(", ")}`);
+    this.appendSyntheticResults(orphans, "会话在执行这个工具时中断, 结果未知。需要的话请重新执行。");
+    return orphans;
+  }
+
+  get length() { return this.messages.length; }
+
+  /**
+   * I4: 历史只能追加, 不能原地改。唯一的例外是整段替换 ——
+   * 整段摘成一条 user 消息, 一条旧消息都不留, 也就没有前缀可以对不上。
+   */
+  async simpleCompact(summarize: (msgs: readonly Anthropic.MessageParam[]) => Promise<string>): Promise<void> {
+    const summary = await summarize(this.messages);
+    this.messages = [compactMessage(summary)];
+    this.journal({ kind: "compact", summary });
+  }
+
+  /** thrashing 护栏: 压缩完立刻又满, 说明有超大单体输入 */
+  static readonly MAX_COMPACTIONS = 3;
+
+  /** 拿不到真实结果的退出路径 (超轮次 / 超预算) 用它补齐配对, 保住 I1 */
+  appendSyntheticResults(ids: string[], reason: string): void {
+    if (!ids.length) return;
+    this.appendUser(ids.map((id) => ({ type: "tool_result" as const, tool_use_id: id, is_error: true, content: reason })));
+  }
+
+  /** I1: 每个 tool_use 都必须在【紧接着的下一条】user 消息里有配对的 tool_result */
+  validate(): string[] {
+    const orphans: string[] = [];
+    for (let i = 0; i < this.messages.length; i++) {
+      const m = this.messages[i]!;
+      if (m.role !== "assistant" || typeof m.content === "string") continue;
+      const ids = m.content.filter((b) => b.type === "tool_use").map((b) => b.id);
+      if (ids.length === 0) continue;
+
+      const next = this.messages[i + 1];
+      const paired = new Set<string>();
+      if (next?.role === "user" && Array.isArray(next.content))
+        for (const b of next.content) if (b.type === "tool_result") paired.add(b.tool_use_id);
+
+      for (const id of ids) if (!paired.has(id)) orphans.push(id);
+    }
+    return orphans;
+  }
+
+  /**
+   * 组装请求。发出去之前先过 validate, 再放缓存断点。
+   * 可缓存前缀按 tools → system → messages 拼接, 改哪层就作废那层及其之后。
+   */
+  assemble(model: string, maxTokens: number): Anthropic.MessageCreateParamsNonStreaming {
+    const orphans = this.validate();
+    if (orphans.length) throw new Error(`I1 violated: 孤儿 tool_use ${orphans.join(", ")}`);
+
+    const cc = { cache_control: { type: "ephemeral" as const } };
+
+    // 断点 1 — tools 末尾, 保住最贵的共享段
+    const tools: Anthropic.Tool[] = this.tools.map((t, i) => ({
+      name: t.name, description: t.description, input_schema: t.inputSchema,
+      ...(i === this.tools.length - 1 ? cc : {}),
+    }));
+
+    // 断点 2 — system 末尾
+    const system = this.system.map((b, i) => (i === this.system.length - 1 ? { ...b, ...cc } : b));
+
+    // 断点 3 — 倒数第二条消息, 让【历史也能命中】。缺了它, 历史每轮全价重发
+    const messages = this.messages.map((m, i) => {
+      if (i !== this.messages.length - 2) return m;
+      const blocks: Anthropic.ContentBlockParam[] =
+        typeof m.content === "string" ? [{ type: "text", text: m.content }] : [...m.content];
+      const last = blocks[blocks.length - 1];
+      if (last) blocks[blocks.length - 1] = { ...last, ...cc } as Anthropic.ContentBlockParam;
+      return { ...m, content: blocks };
+    });
+
+    return { model, max_tokens: maxTokens, system, tools, messages };
+  }
+}
+
+function compactMessage(summary: string): Anthropic.MessageParam {
+  return { role: "user", content: `[已压缩] 之前的会话摘要如下, 请据此继续:\n\n${summary}` };
+}

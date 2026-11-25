@@ -1,0 +1,62 @@
+<section class="stage" id="case1"><div class="stage-head"><span class="stage-num">Case 01 · 踩坑复盘</span><h2>一个简单的汇总问题，为什么跑了 5 分钟</h2></div>
+<div class="goal"><span class="lbl">一句话</span><p>agent 慢，很少是因为某一步慢，通常是<strong>步数太多</strong>。每多一步就多一次完整的模型往返，所以优化的对象是轮数，不是单步耗时。</p></div>
+
+<div class="facts"><div><b>真实案例</b><p>某企业 Agent 产品的试用。对多维表格里的销售明细提问：上周各店销售额从高到低排成表，并附前周比。</p></div><div><b>结果</b><p>4 分 48 秒时还没出答案，可见 36 步以上工具调用，平均每步约 8 秒。</p></div><div><b>理想路径</b><p>3～4 轮：读 skill 和 schema、两周聚合、回表。约 30 秒。</p></div><div><b>依据</b><p>只根据界面截图统计，步骤标签被截断，数字是近似值。内部实现看不到。</p></div></div>
+
+<h3>36 步花在了哪里</h3>
+<div class="tw"><table>
+<thead><tr><th>阶段</th><th>步数</th><th>看到的行为</th><th>病根</th></tr></thead>
+<tbody>
+<tr><td>定位数据</td><td>约 13</td><td>数据表 skill 连读 5 次；同一条 schema 查询命令跑 3 次</td><td>上下文管理</td></tr>
+<tr><td>聚合失败后换路</td><td>约 12</td><td>自述聚合功能持续报错，改走 字段列表 → 查询 → 表信息 → 记录列表，全量拉取</td><td>工具设计</td></tr>
+<tr><td>生成文件</td><td>11+</td><td>写文件、跑 python、读表格 skill 4 次、读校验 skill、查文件导入命令的帮助</td><td>任务边界</td></tr>
+<tr><td>全程</td><td>—</td><td>互不依赖的读操作也是一步一轮</td><td>没有并行</td></tr>
+</tbody></table></div>
+<p>36 步里约 18 步是读 skill 文档。只有一件事做对了：它发现有一条疑似重复的大额记录，并说要在结果里加注意书。</p>
+
+<h3>五条教训</h3>
+
+<div class="note"><span class="lbl">教训 1 · 上下文：读过的东西不该再读</span>
+<p>同一份 skill 读 8 次、同一条 schema 命令跑 3 次，说明前面的结果后来看不到了。原因只有两种：上下文裁剪把它裁掉了，或者 skill 拆得太碎、常用写法放在子文档里。</p>
+<p><strong>做法：</strong>skill 分三层，名字和描述常驻，正文触发时加载一次，冷门细节放子文档。高频用法（按日期筛选 + 分组求和）必须写在正文里。正文放进 system 并加 <code>cache_control</code>，常驻的成本很低。上下文压缩时，skill 正文和 schema 要列为不可裁剪。</p></div>
+
+<div class="note"><span class="lbl">教训 2 · 工具设计：报错要能让模型一次改对</span>
+<p>聚合工具报错后它重试了几次都没改对，最后放弃，退化成全量拉取。这一条损失了约 12 步。</p>
+<p><strong>做法：</strong>报错信息写清楚哪个参数错、正确写法是什么，最好带一个可以直接照抄的示例。再提供一个高层工具，比如「表、分组字段、指标、日期范围 → 聚合结果」，一次调用完成，不要让模型自己拼 schema → field-list → query 这条链。<strong>工具的粒度应该按任务来切，而不是按 API 来切。</strong></p></div>
+
+<div class="note"><span class="lbl">教训 3 · 并行：没有依赖就同一轮发</span>
+<p>读 skill、拉 schema、查字段互不依赖，却是一步一轮。</p>
+<p><strong>做法：</strong>system prompt 里明确要求「互不依赖的调用在同一轮一起发」，运行框架支持一轮多个 <code>tool_use</code> 并发执行（本页 <code>lib.ts</code> 的 <code>toolLoop</code> 就是用 <code>Promise.all</code> 跑同一轮的所有调用）。两周的聚合查询也应该同一轮发。</p></div>
+
+<div class="note"><span class="lbl">教训 4 · 退化路径：要退就一段脚本做完</span>
+<p>聚合真的不可用时，它是拉记录、写文件、跑 python、再检查，每一步都过一次模型。</p>
+<p><strong>做法：</strong>让模型写一段脚本，拉数据、筛两周、分组、算前周比、打印结果全在脚本里，中间数据不经过模型。这样退化也只多 1 轮。中间数据不进上下文，还顺便省了 token。</p></div>
+
+<div class="note"><span class="lbl">教训 5 · 任务边界：问什么答什么，校验力度跟风险匹配</span>
+<p>用户只要「表でまとめて」，它却在生成电子表格文件并走校验流程，后段 11 步以上基本都花在这里。</p>
+<p><strong>做法：</strong>默认在聊天里直接回表格，用户明确要文件时才生成。校验按风险分级：写入、对外发送、改生产数据要校验；只读的汇总不需要。这和 <a href="#p5">P5</a> 一样，Evaluator 只该用在「有清楚的验收标准，而且出错代价高」的地方。</p></div>
+
+<h3>改完应该长什么样</h3>
+<div class="flow"><span class="n llm">轮 1<small>同时读 skill + 拉 schema</small></span><span class="ar">→</span><span class="n llm">轮 2<small>两周聚合同时发</small></span><span class="ar">→</span><span class="n code">前周比<small>代码算</small></span><span class="ar">→</span><span class="n llm">轮 3<small>聊天回表 + 注意书</small></span><span class="br"></span><span class="side">聚合不可用 →</span><span class="n code">一段脚本拉取 + 计算<small>只多 1 轮</small></span></div>
+<div class="key"><span><i class="llm"></i>模型调用</span><span><i class="code"></i>代码（规则 / 校验 / 计算）</span><span><i class="human"></i>交给人</span></div>
+<p>3～4 轮，按每轮 8 秒算约 30 秒，对比原来的 36 步、近 5 分钟。</p>
+
+<h3>自己做 agent 时的自查清单</h3>
+<div class="tw"><table>
+<thead><tr><th>检查项</th><th>怎么看</th></tr></thead>
+<tbody>
+<tr><td>同一份文档或同一条命令有没有被调用两次以上</td><td>trace 里按工具名 + 参数分组计数</td></tr>
+<tr><td>同一轮里是不是只有一个 tool_use</td><td>看每轮 tool_use 个数，长期为 1 就是没并行</td></tr>
+<tr><td>工具报错后，下一次调用有没有改对</td><td>统计「报错 → 同一工具再次报错」的连续次数</td></tr>
+<tr><td>中间数据有没有被整段塞回上下文</td><td>看每轮输入 token 的增长曲线</td></tr>
+<tr><td>输出形态是不是用户要的</td><td>评测集里放几条「只要一个表」的简单问题，测轮数上限</td></tr>
+</tbody></table></div>
+<p>第一列的五项都能从 trace 里自动算出来。<strong>把「轮数」和「重复调用数」放进评测指标</strong>，比只看答案对不对更早发现这类问题。</p>
+
+<div class="qa"><span class="lbl">面试怎么讲</span><div class="body"><p><strong>30 秒版：</strong>我测过一个企业 agent，问一个周销售汇总跑了 5 分钟。拆开看单步只要 8 秒，问题是 36 步，一半在重复读 skill 文档，另外是聚合工具报错后退化成全量拉取，还有它生成了用户没要的文件。我的改法是：skill 正文常驻并缓存，工具报错带正确示例并提供任务级的聚合工具，无依赖调用并行，退化时用一段脚本做完，默认只回聊天。理想路径是 3～4 轮、30 秒左右。</p><dl>
+<dt>agent 慢，你第一步看什么？</dt><dd>先看轮数，不看单步耗时。把 trace 按工具名分组，找重复调用和长期单 tool_use 的轮次。大部分慢都是步数问题，换更快的模型解决不了。</dd>
+<dt>上下文压缩会带来什么问题？</dt><dd>压掉了模型后面还要用的东西，它就会重新去取，等于用延迟换 token。压缩策略要区分「可丢的历史」和「必须常驻的规则和 schema」，后者不能压。</dd>
+<dt>工具怎么设计才能减少步数？</dt><dd>按任务切粒度，而不是一个 API 一个工具。报错信息要能让模型一次改对。读类工具支持批量参数，一次查多个对象。</dd>
+<dt>什么时候该加校验步骤？</dt><dd>按风险分级。写入、对外发送、不可逆操作要校验；只读汇总不需要。校验本身也是步数，不分级地加校验会把简单任务拖慢。</dd>
+</dl></div></div>
+</section>
